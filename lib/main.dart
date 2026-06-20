@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:provider/provider.dart';
 import 'package:material_floating_search_bar_2/material_floating_search_bar_2.dart';
+import 'package:share_plus/share_plus.dart';
 import 'services/wordpress_service.dart';
 import 'models/post_model.dart';
 
@@ -307,26 +308,47 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Post Details'),
-      ),
-      body: FutureBuilder<Post>(
-        future: _postFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error loading post.'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: Text('Post not found.'));
-          }
+    return FutureBuilder<Post>(
+      future: _postFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Error')),
+            body: const Center(child: Text('Error loading post.')),
+          );
+        }
+        if (!snapshot.hasData) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Not Found')),
+            body: const Center(child: Text('Post not found.')),
+          );
+        }
 
-          final post = snapshot.data!;
+        final post = snapshot.data!;
 
-          return SingleChildScrollView(
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(post.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  Share.share(
+                    'Check out this post: ${post.title}\n${post.link}',
+                    subject: post.title,
+                  );
+                },
+                tooltip: 'Share Post',
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -359,9 +381,9 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
